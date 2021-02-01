@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>FOOD MARKET</title>
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+
+<!-- jQuery library -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<!-- Latest compiled JavaScript -->
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic+Coding&display=swap" rel="stylesheet">
+
+<style type="text/css">
+	body {
+		background-color: #fffffb;
+		padding: 70px;
+		font-family: Nanum Gothic Coding;
+	}
+	
+	.product {
+		position: relative;
+		padding: 30px;
+		float: left;
+		z-index: 1;
+		
+	}
+	
+	.product img {
+		position: relative;
+		width: 280px;
+		height: 280px;
+		border: 1px solid #ccc;
+  		box-shadow: 3px 3px 3px 3px rgba(0,0,0,.075);
+		/* cursor: pointer; */
+		margin-bottom: 10px;
+		z-index: 1;
+	}
+	
+	.cart {
+		float:right; 
+		color: #0086c3;
+		cursor: pointer;
+	}
+	
+	.mypage_list {
+		position: absolute;
+		border: 1px solid #ccc;
+  		box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+		font-size: 1.2em;
+		background-color: #dcedc8;
+		z-index: 100;
+		padding-left: 30px;
+		padding-right: 30px;
+		margin-top: 15px;
+		opacity: 0.95;
+	}
+	
+	.mypage_list li {
+		list-style: none;
+		border-bottom: 1px solid gray;
+		padding: 10px;
+		opacity: 0.5;
+	}
+	
+	table th{
+		text-align: center;
+	}
+	
+	table td {
+		vertical-align: middle !important;
+	}
+	
+	a {
+		cursor: pointer;
+		color: #333;
+	}
+	
+	div.tooltip{
+		line-height: 1.5;
+		color: #333;
+		width: 300px;
+		background-color: #aabb97;
+		border: 1px solid #ccc;
+  		box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+		padding: 1em;
+		font-size: 15px;	
+		opacity: 0.8;
+		position: absolute;
+		z-index: 100;
+		display: none;
+	}
+	
+</style>
+<script type="text/javascript">
+	$(function(){
+
+		//localStorage.removeItem("id");	
+		$(".mypage_list").hide();
+		productList();
+		
+		
+		// 마이페이지 서브메뉴
+		$("#mypage_btn").click(function(){
+			$(".mypage_list").toggle('slow');
+		});
+		
+		/* $("#mypage_btn").mouseover(function(){
+			$(".mypage_list").slideDown('slow');
+		});
+		
+		$(".mypage_list").mouseout(function(){
+			setTimeout(function() {
+				$(".mypage_list").slideUp('slow');
+			}, 2000);
+			
+		}); */
+		
+		// 로그인 홈페이지 이동
+		$("#goLogin").click(function(){
+			if(localStorage.id == undefined){
+				location.href="login.html";
+			}
+			else {
+				swal("Notice","이미 로그인상태입니다.");
+			}
+		});
+		
+		// 메인 타이틀 누를시 
+		$("#main_title").click(function(){
+			
+			window.location.reload();
+		});
+		
+		// 회원탈퇴
+		$("#delUser").click(function(){
+			
+			if(localStorage.id != undefined){
+				
+				$("#del_dialog-confirm").dialog({
+					resizable : false,
+					height : "auto",
+					width : 400,
+					modal : true,
+					buttons : {
+						"예" : function() {
+							deleteUser(localStorage.id);
+							
+							localStorage.removeItem("id");
+							$(this).dialog("close");
+							
+						},
+						"아니오" : function() {
+							$(this).dialog("close");
+						}
+					}
+				}).css("display", "block");
+				
+			}
+			else {
+				swal("Notice","로그인이 필요합니다.");
+			}
+		});
+		
+		// 장바구니 클릭
+		$("#userCart").click(function(){
+			if(localStorage.id != undefined){
+				cartList();
+				
+			}
+			else {
+				swal("Notice","로그인이 필요합니다.");
+			}
+			
+		});
+		
+		// 로그아웃
+		$("#logout").click(function(){
+			
+			if(localStorage.id != undefined){
+				localStorage.removeItem("id");
+				window.location.reload();
+			}
+			else {
+				swal("Notice","로그인이 필요합니다.");
+			}
+		});
+		
+		// 상품관리 버튼 클릭
+		$("#manager").click(function(){
+			if(localStorage.id != "manager"){
+				swal("Notice","관리자만 사용 가능합니다.");
+			}
+			else {
+				location.href="manage_product.html";
+			}
+		});
+		
+		// 리스트 hover
+		$(".mypage_list li").hover(function(){
+			$(this).css("opacity", "1");
+		}, function(){
+			$(this).css("opacity", "0.5");
+		});
+		
+		
+		// 장바구니 추가 버튼
+		$(document).on("click", "span.cart", function(){
+			var id = localStorage.id;
+			if (id == undefined){
+				//alert("로그인이 필요합니다.");
+				swal("Notice","로그인이 필요합니다.");
+				return;
+			}
+			
+			var proNum = $(this).attr("num");
+			$.ajax({
+				type: "get",
+				url: "getProduct.jsp",
+				dataType: "json",
+				data: {"num":proNum},
+				success: function(data){
+					if (data.amount == 0){
+
+						$("#amount").val("-1");
+						$("#amount").attr("max", "0");
+					}
+					else{
+						$("#amount").val("1");
+						$("#amount").attr("max", data.amount);
+					
+					}
+				}
+			});
+			
+			$("#cart_dialog-confirm").dialog({
+				resizable : false,
+				height : "auto",
+				width : 400,
+				modal : true,
+				buttons : {
+					"예" : function() {
+						var amount = $("#amount").val();
+						$.ajax({
+							type: "get",
+							url: "getProduct.jsp",
+							dataType: "json",
+							data: {"num":proNum},
+							success: function(data){
+								if (data.amount == 0){
+									swal("Fail", "품절된 상품입니다.");
+								}
+								else {
+									$.ajax({
+										type: "post",
+										url: "insertCartList.jsp",
+										dataType: "html",
+										data: {"id":id, "proNum":proNum, "amount":amount},
+										success: function(data){
+											swal("Success","장바구니 추가 완료");
+											$("#amount").val("1");
+										}
+									});
+								}
+							}
+						});
+							
+						
+						$(this).dialog("close");
+						$("#amount").val("1");
+						
+					},
+					"아니오" : function() {
+						$(this).dialog("close");
+					}
+				}
+			}).css("display", "block");
+			
+			
+		});
+		
+		$(document).on("click", "a.delete", function(){
+			$.ajax({
+				type: "get",
+				url: "deleteCartList.jsp",
+				dataType: "html",
+				data: {"num":$(this).attr("num")},
+				success: function(data){
+					cartList();
+				}
+					
+			});
+			
+		});
+		
+		$(document).on("mouseover", ".info", function(e){
+			$("div.tooltip").css({
+				"left": e.pageX + "px",
+				"top": e.pageY + "px"
+			}).show();
+
+			$("div.tooltip").html("<b>" + $(this).attr("info") + "</b>");
+			
+			$(this).next().next().css("box-shadow", "5px 5px 5px 5px #333");
+			
+		});
+		
+		$(document).on("mouseout", ".info", function(){
+			$("div.tooltip").empty();
+			$("div.tooltip").hide();
+
+			$(this).next().next().css("box-shadow", "3px 3px 3px 3px rgba(0,0,0,.075)");
+		});
+		
+		$(document).on("click", "#buy_btn", function(){
+			$.ajax({
+				type: "get",
+				url: "updateAmount.jsp",
+				dataType: "html",
+				data: {"id":localStorage.id},
+				success: function(data){
+					swal("Success","구입 완료");
+					cartList();
+				}
+			});
+		});
+	});
+	
+	
+	function deleteUser(id){
+		$.ajax({
+			type: "get",
+			url: "deleteCustomer.jsp",
+			dataType: "html",
+			data: {"id": id},
+			success: function(data){
+				swal("Success","성공적으로 탈퇴되었습니다.");
+			}
+		});
+	}
+	
+	function productList(){
+		$.ajax({
+			type: "get",
+			url: "listProduct.jsp",
+			dataType: "xml",
+			success: function(data){
+				var s = "";
+				
+				$(data).find("product").each(function(i, element){
+					s += "<div class = 'product'>"
+						+ "<span class='glyphicon glyphicon-search info' style='float:right; margin-bottom:8px; margin-right: 3px;' info='" + $(element).find("info").text() + "'></span><br>";
+					s += "<img src='../image/" + $(element).find("photo").text() + "' class='info_img'><br>";
+					s += "<h4 style='margin-left: 10px;'><b>" + $(element).find("name").text() + "</b></h4>";
+					s += "<span style='margin-left: 10px; font-size:0.9em'><b>브랜드 > " + $(element).find("brand").text() + "</b>" 
+						+ "</span>";
+					s += "<span class='cart' num='"+ $(element).attr("num");
+					s += "'><span class='glyphicon glyphicon-shopping-cart'></span>&nbsp;&nbsp;장바구니</span></div>";
+				});
+				
+				$("#out").html(s);
+			}
+		});
+	}
+	
+	function cartList(){
+		$.ajax({
+			
+			type: "get",
+			url: "listCartList.jsp",
+			dataType: "xml",
+			data: {"id": localStorage.id},
+			success: function(data){
+				if($(data).find("cart").text() == ''){
+					$("#cart_title").html("장바구니가 비어있습니다");
+					$("#modal-body").html("");
+					$("#cartModal").modal();
+				}
+				else {
+					//$("#cart_title").html($(data).find("id:eq(0)").text() + "님의 장바구니 목록");
+					$("#cart_title").html("<b>" + $(data).find("name:eq(0)").text() + "님의 장바구니 목록</b>");
+					var s="";
+					s += "<table class='table table-bordered'><tr bgcolor='#ddd'>";
+					s += "<th>번호</th>";
+					s += "<th>제품</th>";
+					s += "<th>가격</th>";
+					s += "<th>수량</th>";
+					s += "<th>편집</th>";
+					s += "</tr>";
+					
+					var total = 0;
+					$(data).find("cart").each(function(i, ele){
+						var price = $(ele).find("price").text();
+						var amount = $(ele).find("amount").text();
+						s += "<tr>";
+						s += "<td style='text-align:center;'>" + (i+1) + "</td>";
+						s += "<td><img src='../image/" + $(ele).find("photo").text() + "' style='width:50px;'>&nbsp;&nbsp;&nbsp;" + $(ele).find("pName").text() + "</td>";
+						s += "<td style='text-align:center'>" + price + "</td>";
+						s += "<td style='text-align:center'>" + amount + "</td>";
+						s += "<td style='text-align:center'><a class='delete' num='" + $(ele).attr("num") + "'>제거</td>";
+						
+						s += "</tr>";
+						total += price*amount;
+					});
+					
+					s += "</table>";
+					s += "<h4 style='float:right'><b> 총 금액 : " + total + "원</b></h4>";
+					s += "<button type='button' class='btn btn-success' id='buy_btn' style='margin-left: 220px; margin-top:30px; margin-bottom:5px;'>구매</button>";
+					$("#modal-body").html(s);
+					$("#cartModal").modal();
+				}
+				
+			}
+		});
+	}
+	
+</script>
+</head>
+
+
+<body>
+	<span style="display:inline; font-size: 5em; cursor: pointer; color:#aabb97;" id="main_title">FOOD MARKET</span>
+	<div id="mypage" style="float: right; margin-right: 100px; margin-top:60px; cursor: pointer;">
+		<div id="mypage_btn" style="margin-right: 50px;">
+			<span class="glyphicon glyphicon-user"></span>&nbsp;&nbsp;<b style="font-size: 1.5em;">My Page</b></div>
+		<ul class="mypage_list">
+			<li id="goLogin"><b style="font-size: 0.8em;">로그인</b></li>
+			<li id="userCart"><b style="font-size: 0.8em;">장바구니</b></li>
+			<li id="logout"><b style="font-size: 0.8em;">로그아웃</b></li>
+			<li id="delUser"><b style="font-size: 0.8em;">회원탈퇴</b></li>
+		</ul>
+	</div>
+	
+	<hr style="color:#333; border-top: 1px solid #aaa;">
+	
+	<!-- <div id="mypage">
+		<ul class="mypage_list">
+			<li>Login</li>
+			<li>Cart</li>
+			<li>Logout</li>
+		</ul>
+	</div> -->
+	
+	
+	<br><br>
+	<div id="out"></div>
+	
+
+	<!-- 회원 탈퇴 dialog -->
+	<div id="del_dialog-confirm" title="회원탈퇴" style="display: none">
+		<p><br>
+			<span class="ui-icon ui-icon-alert"
+				style="float: left; margin-top: 3px; margin-right: 10px;"></span>
+				정말로 탈퇴 하시겠습니까?
+		</p>
+	</div>
+	
+	<!-- 장바구니 dialog -->
+	<div id="cart_dialog-confirm" title="장바구니에 제품 추가" style="display: none">
+		<p>
+			
+			<span class="ui-icon ui-icon-alert" style="margin-left: 70px;"></span>
+			<label for="amount" style="margin-left:10px; margin-top: 30px;">수량 선택 :&nbsp;&nbsp;&nbsp;</label>
+			<input type="number" id="amount" min="1" max="50" step="1" value="1"><br><br>
+			
+		</p>
+	</div>
+	
+	
+	<!-- Modal -->
+	<div class="container">
+
+  		<div class="modal fade" id="cartModal" role="dialog">
+    		<div class="modal-dialog">
+    
+      			<!-- Modal content-->
+      			<div class="modal-content">
+        			<div class="modal-header" style="padding:35px 50px; text-align:center;">
+          				<button type="button" class="close" data-dismiss="modal">&times;</button>
+          				<h4 style="color: #333;" id="cart_title"> 장바구니 </h4>
+        			</div>
+        			<div id="modal-body" style="padding:40px 50px;"></div>
+      			</div>
+      
+    		</div>
+  		</div> 
+	</div>
+	<div class="tooltip"></div>
+	<hr style="color:#333; border-top: 1px solid #aaa;">
+	<footer style="float:right;">
+		<a id="manager" style="cursor: pointer;">상품관리</a>
+	</footer>
+</body>
+</html>

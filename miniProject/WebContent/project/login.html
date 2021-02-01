@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>FOOD MARKET_login</title>
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+
+<!-- jQuery library -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<!-- Latest compiled JavaScript -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic+Coding&display=swap" rel="stylesheet">
+
+
+<style type="text/css">
+	body {
+		background-color: #fffffb;
+		padding: 70px;
+		font-family: Nanum Gothic Coding;
+	}
+	
+	#login {
+		padding: 30px 0px 30px 100px;
+		align-items: center;
+		border: 1px solid #ccc;
+  		box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+		width: 500px;
+		margin: 100px auto;
+		background-color: #dcedc8;
+	}
+	
+	legend {
+		font-size: 20pt;
+		font-style: bold;
+		padding: 10px;
+		border: none;
+	}
+	
+	h6 {
+		cursor: pointer;
+		color: #333;
+	}
+
+	.modal-content {
+		background-color: #eee;
+	}
+	
+	.modal-header, #sign_title, .close {
+    	background-color: #eee;
+    	color:#aabb97 !important;
+    	text-align: center;
+    	font-size: 30px;
+  	}
+  	
+  	.sign_input {
+  		border: 1px solid #ccc;
+  		box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+  	}
+  	
+</style>
+
+<script type="text/javascript">
+	$(function(){
+		
+		// 회원가입 모달띄우기
+		$("h6.sign").click(function(){
+			$("#signModal").modal();
+		});
+		
+		// 비밀번호찾기 모달띄우기
+		$("h6.find_pass").click(function(){
+			$("#findPassModal").modal();
+		});
+		
+		$("h6").hover(function(){
+			$(this).css("text-decoration", "underline");
+		}, function(){
+			$(this).css("text-decoration", "none");
+		});
+		
+		// 모달에서 회원가입 완료시
+		$("#sign_btn").click(function(){
+			var id = $("#sign_id").val();
+			var password = $("#sign_pass").val();
+			var name = $("#sign_name").val();
+			var gender = $("input[name='sign_gender']:checked").val();
+			var address = $("#sign_addr").val();
+			var birthday = $("#sign_birth").val();
+			var phone = $("#sign_phone").val();
+			var question = $("select[name='sign_question']").val();
+			var answer = $("#sign_answer").val();
+			
+			if(id=='' || password=='' || name=='' || gender=='' || address=='' || phone=='' || answer=='') {
+				swal("Notice","입력하지 않은 정보가 있습니다. 전부 입력해주세요.");
+				return;
+			}
+			
+			$.ajax({
+				type: "get",
+				url: "listCustomer.jsp",
+				dataType: "xml",
+				success: function(data){
+					var find = false;
+					$(data).find("customer").each(function(i, ele){
+						var mId = $(ele).attr("id");
+						
+						if(id == mId){
+							find = true;
+						}
+					});
+					
+					if(!find){
+						addData(id, password, name, gender, address, birthday, phone, question, answer);
+					}
+					else {
+						swal("Notice","이미 존재한 아이디 입니다. 다른 아이디를 이용해주세요.");
+					}
+				}
+			});
+			
+			
+		});
+		
+		// 로그인 버튼 클릭시
+		$("#loginBtn").click(function(){
+			var id = $("#userID").val();
+			var pass = $("#userPass").val();
+			
+			$.ajax({
+				type: "get",
+				url: "getCustomer.jsp",
+				dataType: "json",
+				data: {"id":id},
+				success: function(data){
+					//alert(data.password + " " + pass);
+					if(pass==data.password){
+			
+						localStorage.setItem("id", id);
+						location.href="main.html";
+					}
+					else {
+						swal("Notice","비밀번호가 맞지 않습니다.");
+						$("#userPass").val("");
+						$("#userPass").focus();
+					}
+				}
+			});
+			
+		});
+		
+		// 비밀번호찾기 버튼 클릭시
+		$("#findPass_btn").click(function(){
+			var id = $("#findPass_id").val();
+			var name = $("#findPass_name").val();
+			var phone = $("#findPass_phone").val();
+			var answer = $("#findPass_answer").val();
+			
+			if(id=='' || name=='' || phone=='' || answer=='') {
+				swal("Notice","입력하지 않은 정보가 있습니다. 전부 입력해주세요.");
+				return;
+			}
+			
+			$.ajax({
+				type: "post",
+				url: "getCustomer.jsp",
+				dataType: "json",
+				data: {"id": id},
+				success: function(data){
+					if(name==data.name && phone==("0"+data.phone) && answer==data.answer){
+						$("#findPassModal").modal("hide");
+						swal("Notice", id + "님의 비밀번호는 " + data.password + "입니다.");
+					}
+					else {
+						swal("Notice","일치하는 정보의 회원이 없습니다.");
+					}
+				}
+			});
+			
+		});
+		
+		// 메인 타이틀 누를시 메인으로 이동
+		$("#main_title").click(function(){
+			location.href="main.html";
+		});
+		
+	});
+	
+	function addData(id, password, name, gender, address, birthday, phone, question, answer){
+		$.ajax({
+			type: "post",
+			url: "insertCustomer.jsp",
+			dataType: "html",
+			data: {"id":id, "password":password, "name" : name, "gender":gender, "address": address, "birthday":birthday,
+					"phone":phone, "question":question, "answer":answer},
+			success: function(data) {
+				$("#signModal").modal("hide");
+				swal("Success","회원가입 완료");
+				
+				$("#sign_id").val("");
+				$("#sign_pass").val("");
+				$("#sign_name").val("");
+				$("#sign_addr").val("");
+				$("#sign_birth").val("2000-01-01");
+				$("#sign_phone").val("");
+				$("#sign_answer").val("");
+				$("input[value='남자']").prop("checked", true);
+				$("select[name='sign_question']").val('보물').prop("selected", true);
+				
+			}
+				
+		});
+	}
+</script>
+</head>
+<body>
+	<span style="display:inline; font-size: 5em; cursor:pointer; color:#aabb97" id="main_title">F00D MARKET <span style="font-size:20px;">
+	&nbsp;&nbsp;<b style='color: #aaa'>- Login</b></span></span>
+	<hr style="color:#333; border-top: 1px solid #aaa;">
+	<fieldset id="login">
+		<legend style="width: auto; font-size: 2.5em;">Login</legend>
+		
+		<label for="userID" style="width: 100px; text-align: center;"><h4><b>ID</b></h4></label><input type="text" id="userID" class="sign_input input-sm"><br>
+		<label for="userPass" style="width: 100px; margin-top: 30px;"><h4><b>Password</b></h4></label>
+		<input type="password" id="userPass" class="sign_input input-sm"><br><br><br>
+		<button type="button" id="loginBtn" class="btn" style="margin-left: 120px; color:#333; background-color:#aabb97;"><b>로그인</b></button><br><br>
+		<h6 style="float: right; margin-right:30px;" class="sign">간편 회원가입</h6>
+		<h6 style="float: right; margin-right:30px;" class="find_pass">비밀번호 찾기</h6>
+		
+	</fieldset>
+	
+	<div class="container">
+
+  		<!-- Modal -->
+  		<div class="modal fade" id="signModal" role="dialog">
+    		<div class="modal-dialog">
+    
+      			<!-- Modal content-->
+      			<div class="modal-content">
+        			<div class="modal-header" style="padding:35px 50px;">
+          				<button type="button" class="close" data-dismiss="modal">&times;</button>
+          				<h4 id="sign_title" style="color: #aabb97;"> 간편 회원가입 </h4>
+        			</div>
+        			<div class="modal-body" style="padding:40px 50px;">
+          				<form role="form">
+          				<div class="form-group">
+              				<label for="sign_id" style="width: 150px;"><span class="glyphicon glyphicon-user"></span>&nbsp;&nbsp;&nbsp;ID</label>
+              				<input type="text" id="sign_id" style="width: 250px;" class="sign_input input-sm">
+            			</div>
+            			<div class="form-group">
+              				<label for="sign_pass" style="width: 150px;"><span class="glyphicon glyphicon-user"></span>&nbsp;&nbsp;&nbsp;Password</label>
+              				<input type="password" id="sign_pass" style="width: 250px;" class="sign_input input-sm">
+            			</div>
+            			<div class="form-group">
+              				<label for="sign_name" style="width: 150px;"><span class="glyphicon glyphicon-user"></span>&nbsp;&nbsp;&nbsp;이름</label>
+              				<input type="text" id="sign_name" style="width: 250px;" class="sign_input input-sm">
+            			</div>
+            			<div class="form-group">
+              				<label for="sign_gender" style="width: 150px;"><span class="glyphicon glyphicon-user"></span>&nbsp;&nbsp;&nbsp;성별</label>
+              				<input type="radio" name="sign_gender" value="남자" checked="checked"> 남자 
+							<input type="radio" name="sign_gender" value="여자"> 여자
+            			</div>
+            			<div class="form-group">
+              				<label for="sign_addr" style="width: 150px;"><span class="glyphicon glyphicon-home"></span>&nbsp;&nbsp;&nbsp;주소</label>
+              				<input type="text" id="sign_addr" style="width: 300px;" class="sign_input input-sm">
+            			</div>
+            			<div class="form-group">
+              				<label for="sign_birth" style="width: 150px;"><span class="glyphicon glyphicon glyphicon-calendar"></span>&nbsp;&nbsp;&nbsp;생년월일</label>
+              				<input type="date" id="sign_birth" style="width: 300px;" value="2000-01-01" class="sign_input input-sm">
+            			</div>
+            			<div class="form-group">
+              				<label for="sign_phone" style="width: 150px;"><span class="glyphicon glyphicon-earphone"></span>&nbsp;&nbsp;&nbsp;휴대전화</label>
+              				<input type="text" id="sign_phone" style="width: 300px;" class="sign_input input-sm">
+            			</div>
+            			<div class="form-group">
+              				<label for="sign_question" style="width: 200px;"><span class="glyphicon glyphicon-question-sign"></span>&nbsp;&nbsp;&nbsp;비밀번호 찾을 시, 질문</label>
+              				<select name="sign_question" style="width: 250px;">
+              					<option value="보물" selected="selected">자신의 보물 1호는?</option>
+              					<option value="지역">자신이 살고있는 지역은?</option>
+              					<option value="연예인">가장 좋아하는 연예인은?</option>
+              					<option value="영화">가장 좋아하는 영화는?</option>
+              					<option value="나라">가장 가고싶은 나라는?</option>
+              				</select>
+            			</div>
+            			<div class="form-group">
+              				<label for="sign_answer" style="width: 150px;"><span class="glyphicon glyphicon-chevron-right"></span>&nbsp;&nbsp;&nbsp;답변 </label>
+              				<input type="text" id="sign_answer" style="width: 300px;" class="sign_input input-sm">
+            			</div>
+            			<br>
+              			<button type="button" class="btn btn-block" id="sign_btn" style="width: 200px; margin:0px auto; background-color: #aabb97">
+              				<span class="glyphicon glyphicon-user"></span><b>&nbsp;&nbsp;회원가입</b>
+              			</button>
+          				</form>
+        			</div>
+      			</div>
+      
+    		</div>
+  		</div> 
+	</div>
+	
+	<div class="container">
+
+  		<!-- Modal -->
+  		<div class="modal fade" id="findPassModal" role="dialog">
+    		<div class="modal-dialog">
+    
+      			<!-- Modal content-->
+      			<div class="modal-content">
+        			<div class="modal-header" style="padding:35px 50px;">
+          				<button type="button" class="close" data-dismiss="modal">&times;</button>
+          				<h4 id="sign_title" style="color: #aabb97;"> 비밀번호 찾기 </h4>
+        			</div>
+        			<div class="modal-body" style="padding:40px 50px;">
+          				<form role="form">
+          					<div class="form-group">
+              					<label for="findPass_id" style="width: 150px;"><span class="glyphicon glyphicon-user"></span>&nbsp;&nbsp;&nbsp;ID</label>
+              					<input type="text" id="findPass_id" style="width: 250px;" class="sign_input input-sm">
+            				</div>
+            				<div class="form-group">
+              					<label for="findPass_name" style="width: 150px;"><span class="glyphicon glyphicon-user"></span>&nbsp;&nbsp;&nbsp;이름</label>
+              					<input type="text" id="findPass_name" style="width: 250px;" class="sign_input input-sm">
+            				</div>
+            				<div class="form-group">
+              					<label for="findPass_phone" style="width: 150px;"><span class="glyphicon glyphicon-earphone"></span>&nbsp;&nbsp;&nbsp;휴대전화</label>
+              					<input type="text" id="findPass_phone" style="width: 300px;" class="sign_input input-sm">
+            				</div>
+            				<div class="form-group">
+              					<label for="findPass_question" style="width: 150px;"><span class="glyphicon glyphicon-question-sign"></span>&nbsp;&nbsp;&nbsp;질문</label>
+              					<select name="findPass_question" style="width: 250px;">
+              						<option value="보물" selected="selected">자신의 보물 1호는?</option>
+              						<option value="지역">자신이 살고있는 지역은?</option>
+              						<option value="연예인">가장 좋아하는 연예인은?</option>
+              						<option value="영화">가장 좋아하는 영화는?</option>
+              						<option value="나라">가장 가고싶은 나라는?</option>
+              					</select>
+            				</div>
+            				<div class="form-group">
+              					<label for="findPass_answer" style="width: 150px;"><span class="glyphicon glyphicon-chevron-right"></span>&nbsp;&nbsp;&nbsp;답변 </label>
+              					<input type="text" id="findPass_answer" style="width: 300px;" class="sign_input input-sm">
+            				</div><br>
+            				<button type="button" class="btn btn-block" id="findPass_btn" style="width: 200px; margin:0px auto; background-color: #aabb97">
+              					<b>&nbsp;&nbsp;비밀번호 찾기</b>
+              				</button>
+          				</form>
+        			</div>
+      			</div>
+      
+    		</div>
+  		</div> 
+	</div>
+</body>
+</html>
