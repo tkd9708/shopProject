@@ -4,4 +4,11 @@
 
 
 ## 사용기술
-
+* JSP
+* AJAX
+* json
+* xml
+* JavaScript
+* Java
+* HTML
+* CSS
